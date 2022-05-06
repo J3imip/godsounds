@@ -1,23 +1,24 @@
 import {createConnection} from 'typeorm';
 import {User} from './entities/User';
-import {Context, Telegraf} from 'telegraf';
-import dotenv from 'dotenv';
+import {Telegraf, session} from 'telegraf';
+import * as dotenv from 'dotenv';
 import {Sticker} from './entities/Sticker';
-import UserService from './services/user.service';
+import ContextWithSession from './interfaces/Context';
+import getUser from './middlewares/getUser';
 
 dotenv.config();
 
-const bot = new Telegraf(process.env.BOT_TOKEN!);
+const bot = new Telegraf<ContextWithSession>(process.env.BOT_TOKEN!);
 
 (async() => {
   try {
     await createConnection({
       type: "postgres",
-      host: "localhost",
-      port: 5432,
-      username: "postgres",
-      password: "godsounds",
-      database: "godsounds",
+      host: process.env.POSTGRES_HOST,
+      port: parseInt(process.env.PORT!),
+      username: process.env.POSTGRES_USER,
+      password: process.env.POSTGRES_PASSWORD,
+      database: process.env.POSTGRES_DATABASE,
       entities: [
         User,
         Sticker
@@ -25,6 +26,14 @@ const bot = new Telegraf(process.env.BOT_TOKEN!);
       synchronize: true
     });
     console.log("Connected to database!");
+
+    bot.use(session());
+    bot.use(getUser());
+
+    bot.on("text", async(ctx: ContextWithSession) => {
+      console.log(ctx.session?.user);
+    });
+
     bot.launch({
       dropPendingUpdates: true
     });
@@ -33,13 +42,3 @@ const bot = new Telegraf(process.env.BOT_TOKEN!);
     throw new Error("Unable to connect to db");
   }
 })();
-
-bot.command("start", async(ctx: Context)=>{
-  const user = await UserService.findOne({userId: ctx.from!.id});
-  if(!user) 
-    await UserService.createUser({
-      userId: ctx.from!.id,
-      firstName: ctx.from?.first_name,
-      username: ctx.from?.username
-    });
-});

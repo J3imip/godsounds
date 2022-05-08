@@ -1,11 +1,12 @@
 import {User} from '../entities/User';
+import ContextWithSession from '../interfaces/Context';
 import UserService from '../services/user.service';
 
-const getUser = () => async(ctx: any, next: Function) => {
-  let user = ctx.update[Object.keys(ctx.update)[1]].from;
-  let userPostgres: undefined | User = await UserService.findOne({userId: user.id});
+const getUser = () => async(ctx: ContextWithSession, next: Function) => {
+  let user = ctx.from;
+  let userPostgres: undefined | User = await UserService.findOne({userId: user!.id});
     
-  if(!user) {
+  if(!userPostgres) {
     await UserService.createUser({
       userId: ctx.from!.id,
       firstName: ctx.from?.first_name,
@@ -15,7 +16,7 @@ const getUser = () => async(ctx: any, next: Function) => {
     userPostgres = await UserService.findOne({userId: ctx.from!.id});
   };
   
-  ctx.session ??= {user: userPostgres};
+  ctx.session.user = userPostgres;
   return next();
 }
 

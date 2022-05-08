@@ -1,10 +1,13 @@
-import {Context} from 'telegraf';
+import {Context, Scenes} from 'telegraf';
 import {User} from '../entities/User';
 
-interface SessionData {
-  user: Partial<User>
+interface NewSession extends Scenes.SceneSession {
+  user: User | undefined
 }
 
-export default interface ContextWithSession extends Context {
-  session?: SessionData 
+interface ContextWithSession extends Context {
+  session: NewSession
+  scene: Scenes.SceneContextScene<ContextWithSession>
 }
+
+export = ContextWithSession;

@@ -1,6 +1,6 @@
 import {createConnection} from 'typeorm';
 import {User} from './entities/User';
-import {Telegraf, session} from 'telegraf';
+import {Telegraf, session, Scenes} from 'telegraf';
 import * as dotenv from 'dotenv';
 import {Sticker} from './entities/Sticker';
 import ContextWithSession from './interfaces/Context';
@@ -27,12 +27,12 @@ const bot = new Telegraf<ContextWithSession>(process.env.BOT_TOKEN!);
     });
     console.log("Connected to database!");
 
-    bot.use(session());
-    bot.use(getUser());
+    const stage = new Scenes.Stage<ContextWithSession>([], {ttl: 10});
 
-    bot.on("text", async(ctx: ContextWithSession) => {
-      console.log(ctx.session?.user);
-    });
+    bot.use(session());
+    bot.use(stage.middleware());
+    bot.use(getUser());
+    bot.use(require('./composers/user.composer'));
 
     bot.launch({
       dropPendingUpdates: true

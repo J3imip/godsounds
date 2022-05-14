@@ -3,7 +3,7 @@ import ContextWithSession from '../interfaces/Context';
 const composer = new Composer<ContextWithSession>();
 
 composer.start(async(ctx: ContextWithSession)=>{
-  await ctx.reply("hey nigga");
+  await ctx.reply("hey, user)");
 });
 
 export = composer;
